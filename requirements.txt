@@ -1,0 +1,9 @@
+Bio==1.5.9
+joblib==1.2.0
+numpy==1.23.3
+pandas==1.4.3
+pytorch_lightning==1.8.3.post1
+scipy==1.9.3
+torch==1.11.0
+torchmetrics==0.9.3
+tqdm==4.64.0
