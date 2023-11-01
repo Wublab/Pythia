@@ -5,6 +5,7 @@ from pdb_utils import *
 from Bio.PDB.Polypeptide import index_to_one
 from tqdm import tqdm
 import argparse
+from joblib import Parallel, delayed
 
 import warnings
 from Bio import BiopythonDeprecationWarning
