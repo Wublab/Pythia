@@ -78,3 +78,10 @@ By default, this will process files in the directory `../s669_AF_PDBs/` using `c
    ```bash
    python masked_ddg_scan.py --pdb_filename "/path/to/file.pdb" --device cpu
    ```
+
+## Train
+
+1. Download preprocessed files for training at [CATH dataset](https://drive.google.com/file/d/1HlW27bcHX6CB5GpHlSf90pwrX5e21_Ch/view?usp=sharing) or [BioA dataset]():  
+    ```bash
+    sbatch train_model.sh
+    ```
