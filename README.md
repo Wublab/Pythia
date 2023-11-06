@@ -81,7 +81,7 @@ By default, this will process files in the directory `../s669_AF_PDBs/` using `c
 
 ## Train
 
-1. Download preprocessed files for training at [CATH dataset](https://drive.google.com/file/d/1HlW27bcHX6CB5GpHlSf90pwrX5e21_Ch/view?usp=sharing) or [BioA dataset]():  
+1. Download preprocessed files for training at [CATH dataset](https://drive.google.com/file/d/1HlW27bcHX6CB5GpHlSf90pwrX5e21_Ch/view?usp=sharing) or [BioA dataset](https://drive.google.com/file/d/1iGJPXThJj6Vv7noT-RlcXuUPasxhamkg/view?usp=sharing) from the Google Drive:  
     ```bash
     sbatch train_model.sh
     ```
