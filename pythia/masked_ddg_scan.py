@@ -84,8 +84,8 @@ def main(args):
     run_dir = bool(input_dir)
 
     # device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    torch_model_c = get_torch_model("../pythia-c.pt")
-    torch_model_p = get_torch_model("../pythia-p.pt")
+    torch_model_c = get_torch_model("../pythia-c.pt", device)
+    torch_model_p = get_torch_model("../pythia-p.pt", device)
 
     if run_dir:
         files = glob.glob(f'{input_dir}*.pdb')
