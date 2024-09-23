@@ -11,6 +11,9 @@ import warnings
 from Bio import BiopythonDeprecationWarning
 
 warnings.filterwarnings("ignore", category=BiopythonDeprecationWarning)
+pythia_root_dpath = os.path.dirname(os.path.abspath(__file__))
+
+
 
 
 def get_torch_model(ckpt_path, device='cuda'):
@@ -84,8 +87,9 @@ def main(args):
     run_dir = bool(input_dir)
 
     # device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    torch_model_c = get_torch_model("../pythia-c.pt", device)
-    torch_model_p = get_torch_model("../pythia-p.pt", device)
+    # thx to zhenglz
+    torch_model_c = get_torch_model(os.path.join(pythia_root_dpath, "../pythia-c.pt"), device)
+    torch_model_p = get_torch_model(os.path.join(pythia_root_dpath, "../pythia-p.pt"), device)
 
     if run_dir:
         files = glob.glob(f'{input_dir}*.pdb')
