@@ -78,6 +78,7 @@ By default, this will process files in the directory `../s669_AF_PDBs/` using `c
    ```bash
    python masked_ddg_scan.py --pdb_filename "/path/to/file.pdb" --device cpu
    ```
+[Megascale dataset](./megascale_data.csv), [S2648](./s2648_data.csv), [S669](./s669_data.csv) contains predictions and labels.
 
 ## Train
 
