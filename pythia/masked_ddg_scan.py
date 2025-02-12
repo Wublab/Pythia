@@ -5,6 +5,7 @@ from pdb_utils import *
 from Bio.PDB.Polypeptide import index_to_one
 from tqdm import tqdm
 import argparse
+import os
 from joblib import Parallel, delayed
 
 import warnings
@@ -12,8 +13,6 @@ from Bio import BiopythonDeprecationWarning
 
 warnings.filterwarnings("ignore", category=BiopythonDeprecationWarning)
 pythia_root_dpath = os.path.dirname(os.path.abspath(__file__))
-
-
 
 
 def get_torch_model(ckpt_path, device='cuda'):

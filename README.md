@@ -21,7 +21,7 @@ python masked_ddg_scan.py
 
 By default, this will process files in the directory `../s669_AF_PDBs/` using `cuda:0` (GPU 0) if available.
 
-### Command Line Options
+**Command Line Options**  
 
 - `--input_dir`: Specifies the directory path containing the PDB files. Default is `../s669_AF_PDBs/`.
   
@@ -65,7 +65,7 @@ By default, this will process files in the directory `../s669_AF_PDBs/` using `c
   python masked_ddg_scan.py --device cpu
   ```
 
-## Examples
+**Examples**
 
 1. Process all PDB files in the directory `/path/to/directory/`, using the first GPU and checking pLDDT values with a cutoff of 90:
    
@@ -79,6 +79,20 @@ By default, this will process files in the directory `../s669_AF_PDBs/` using `c
    python masked_ddg_scan.py --pdb_filename "/path/to/file.pdb" --device cpu
    ```
 [Megascale dataset](./megascale_data.csv), [S2648](./s2648_data.csv), [S669](./s669_data.csv) contains predictions and labels.
+
+### Pocket Prediction
+Change the `input_pdb = "aes72_af3.pdb"` in `inference.py` to the desired PDB file and run the following command:
+```bash
+cd pythia-pocket
+python inference.py
+```
+
+### Protein Stability Score
+Change the `fpath_pdb = "../examples/1pga.pdb"` in `score.py` to the desired PDB file and run the following command:
+```
+cd pythia
+python score.py
+```
 
 ## Train
 
