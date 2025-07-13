@@ -99,10 +99,10 @@ def main():
     # device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # thx to zhenglz
     torch_model_c = get_torch_model(
-        os.path.join(pythia_root_dpath, "../pythia-c.pt"), device
+        os.path.join(pythia_root_dpath, "pythia-c.pt"), device
     )
     torch_model_p = get_torch_model(
-        os.path.join(pythia_root_dpath, "../pythia-p.pt"), device
+        os.path.join(pythia_root_dpath, "pythia-p.pt"), device
     )
 
     if run_dir:

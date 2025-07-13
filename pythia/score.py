@@ -23,13 +23,13 @@ def sequence_score_stab(models: list, pdb_file: str, device):
 
 
 if __name__ == "__main__":
-    device = "cuda"
-    fpath_pdb = "../examples/1pga.pdb"
+    device = "cuda:0"
+    fpath_pdb = "examples/1pga.pdb"
     torch_model_c = get_torch_model(
-        os.path.join(pythia_root_dpath, "../pythia-c.pt"), device
+        os.path.join(pythia_root_dpath, "pythia-c.pt"), device
     )
     torch_model_p = get_torch_model(
-        os.path.join(pythia_root_dpath, "../pythia-p.pt"), device
+        os.path.join(pythia_root_dpath, "pythia-p.pt"), device
     )
     models = [torch_model_c, torch_model_p]
     print(sequence_score_stab(models, fpath_pdb, device))
