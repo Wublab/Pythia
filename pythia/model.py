@@ -1,45 +1,59 @@
-import torch
-from torch import optim, nn
 import pytorch_lightning as pl
+import torch
 import torchmetrics
+from torch import nn, optim
+
 
 class AMPNNLayer(nn.Module):
-    def __init__(
-        self,
-        embed_dim = 128,
-        n_heads = 8,
-        dropout = 0.2,
-        neighbor_num = 32
-        ) -> None:
+    def __init__(self, embed_dim=128, n_heads=8, dropout=0.2, neighbor_num=32) -> None:
         super().__init__()
-        self.multihead_message = nn.MultiheadAttention(embed_dim=embed_dim, num_heads=n_heads, dropout=dropout)
-        self.feed_forwards_message = nn.Sequential(nn.Linear(embed_dim, embed_dim * 4), nn.GELU(), nn.Linear(embed_dim * 4, embed_dim))
-        self.multihead_update = nn.MultiheadAttention(embed_dim=embed_dim,num_heads=n_heads, dropout=dropout)
-        self.feed_forwards_update = nn.Sequential(nn.Linear(embed_dim, embed_dim * 4), nn.GELU(), nn.Linear(embed_dim * 4, embed_dim))
+        self.multihead_message = nn.MultiheadAttention(
+            embed_dim=embed_dim, num_heads=n_heads, dropout=dropout
+        )
+        self.feed_forwards_message = nn.Sequential(
+            nn.Linear(embed_dim, embed_dim * 4),
+            nn.GELU(),
+            nn.Linear(embed_dim * 4, embed_dim),
+        )
+        self.multihead_update = nn.MultiheadAttention(
+            embed_dim=embed_dim, num_heads=n_heads, dropout=dropout
+        )
+        self.feed_forwards_update = nn.Sequential(
+            nn.Linear(embed_dim, embed_dim * 4),
+            nn.GELU(),
+            nn.Linear(embed_dim * 4, embed_dim),
+        )
         self.message_transitions = nn.Sequential(nn.Linear(embed_dim * 2, embed_dim))
         self.layer_norms = nn.ModuleList([nn.LayerNorm(embed_dim) for _ in range(4)])
         self.neighbor_num = neighbor_num
+
     def forward(self, h0, e0):
-        h1, _ = self.multihead_message(h0[0,:,:].unsqueeze(0).repeat(self.neighbor_num,1,1), h0, h0)
-        h2 = self.layer_norms[1](self.feed_forwards_message(self.layer_norms[0](h1)) + h0)
+        h1, _ = self.multihead_message(
+            h0[0, :, :].unsqueeze(0).repeat(self.neighbor_num, 1, 1), h0, h0
+        )
+        h2 = self.layer_norms[1](
+            self.feed_forwards_message(self.layer_norms[0](h1)) + h0
+        )
         mess_t = self.message_transitions(torch.concat((h2, e0), dim=-1))
         h_3, _ = self.multihead_update(mess_t, h2, h2)
-        h_4 = self.layer_norms[3](self.feed_forwards_update(self.layer_norms[2](h_3) + h2))
+        h_4 = self.layer_norms[3](
+            self.feed_forwards_update(self.layer_norms[2](h_3) + h2)
+        )
         return h_4
 
 
 class AMPNN(nn.Module):
     def __init__(
         self,
-        embed_dim = 128,
-        edge_dim = 27,
-        node_dim = 38,
-        n_heads = 8,
-        layer_nums = 3,
-        token_num = 33,
-        dropout = 0.2,
-        neighbor_num = 32
-        ) -> None:
+        embed_dim=128,
+        edge_dim=27,
+        node_dim=38,
+        n_heads=8,
+        layer_nums=3,
+        token_num=33,
+        dropout=0.2,
+        neighbor_num=32,
+    ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
         self.edge_dim = edge_dim
@@ -50,9 +64,20 @@ class AMPNN(nn.Module):
         self.neighbor_num = neighbor_num
         self.init_node_embed = nn.Linear(node_dim, embed_dim, bias=False)
         self.init_edge_embed = nn.Linear(edge_dim, embed_dim, bias=False)
-        self.layer_list = nn.ModuleList([AMPNNLayer(embed_dim=embed_dim, n_heads=n_heads, dropout=dropout, neighbor_num=self.neighbor_num) for _ in range(layer_nums)])
+        self.layer_list = nn.ModuleList(
+            [
+                AMPNNLayer(
+                    embed_dim=embed_dim,
+                    n_heads=n_heads,
+                    dropout=dropout,
+                    neighbor_num=self.neighbor_num,
+                )
+                for _ in range(layer_nums)
+            ]
+        )
         self.lm_heads = nn.Linear(embed_dim, token_num)
         self.layer_norms = nn.LayerNorm(embed_dim)
+
     def forward(self, node_features, edge_features):
         h0 = self.init_node_embed(node_features)
         e0 = self.init_edge_embed(edge_features)
@@ -61,17 +86,18 @@ class AMPNN(nn.Module):
 
         return self.lm_heads(h0.sum(0)), h0
 
+
 class Liteampnn(pl.LightningModule):
     def __init__(
         self,
-        embed_dim = 128,
-        edge_dim = 27,
-        node_dim = 28,
-        dropout = 0.2,
-        layer_nums = 3,
-        token_num = 21,
-        learning_rate = 1e-3,
-        neighbor_num = 32,
+        embed_dim=128,
+        edge_dim=27,
+        node_dim=28,
+        dropout=0.2,
+        layer_nums=3,
+        token_num=21,
+        learning_rate=1e-3,
+        neighbor_num=32,
     ) -> None:
         super().__init__()
         self.ampnn = AMPNN(
@@ -81,14 +107,19 @@ class Liteampnn(pl.LightningModule):
             token_num=token_num,
             layer_nums=layer_nums,
             dropout=dropout,
-            neighbor_num=neighbor_num
+            neighbor_num=neighbor_num,
         )
         self.learning_rate = learning_rate
 
-        self.train_acc = torchmetrics.Accuracy(task='multiclass', num_classes=21, top_k=1)
-        self.valid_acc = torchmetrics.Accuracy(task='multiclass', num_classes=21, top_k=1)
-        self.test_acc = torchmetrics.Accuracy(task='multiclass', num_classes=21, top_k=1)
-
+        self.train_acc = torchmetrics.Accuracy(
+            task="multiclass", num_classes=21, top_k=1
+        )
+        self.valid_acc = torchmetrics.Accuracy(
+            task="multiclass", num_classes=21, top_k=1
+        )
+        self.test_acc = torchmetrics.Accuracy(
+            task="multiclass", num_classes=21, top_k=1
+        )
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -128,15 +159,17 @@ class Liteampnn(pl.LightningModule):
         self.log("test_acc_step", self.test_acc)
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.learning_rate, weight_decay=1e-4)
+        optimizer = optim.Adam(
+            self.parameters(), lr=self.learning_rate, weight_decay=1e-4
+        )
         return optimizer
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     model = Liteampnn()
     trainer = pl.Trainer(
         devices=1,
-        accelerator='gpu',
+        accelerator="gpu",
         precision=32,
         max_epochs=100,
     )
