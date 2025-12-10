@@ -119,8 +119,8 @@ if __name__ == "__main__":
     test_s669 = True
 
     if test_s669:
-        path_to_pdb = "../s669_AF_PDBs/"
-        data_df = pd.read_csv("../s669_data_chain_A.csv")
+        path_to_pdb = "../innovation_paper/s669_AF_PDBs/"
+        data_df = pd.read_csv("../innovation_paper/s669_data_chain_A.csv")
         ddgs = []
         all_preds = []
         names = []
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         train_dev_sets = torch.utils.data.ConcatDataset(datasets)
         dataloader = DataLoader(train_dev_sets, batch_size=669, shuffle=False)
 
-        models = ["../pythia-c.pt", "../pythia-p.pt"]
+        models = ["pythia-c.pt", "pythia-p.pt"]
         data_df["pythiascore"] = 0
         for m in models:
             torch_model = get_torch_model(m, device=device)
@@ -158,6 +158,6 @@ if __name__ == "__main__":
         data_df["name"] = names
         data_df["ddG"] = ddgs
         df_out = data_df[["name", "ddG", "pythiascore"]]
-        df_out.to_csv(f"../pythia_s669.csv", index=None, sep=",")
+        df_out.to_csv(f"../innovation_paper/pythia_s669.csv", index=None, sep=",")
         print(spearmanr(data_df["pythiascore"], ddgs))
         print(pearsonr(data_df["pythiascore"], ddgs))

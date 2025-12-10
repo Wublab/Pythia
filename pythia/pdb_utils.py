@@ -131,7 +131,7 @@ def read_pdb_to_protbb(pdb_file: str):
     return ProtBB(cas, cbs, cs, os, ns, seqs, resseqs, chains, bb_ang, sasa)
 
 
-def get_neighbor_old(protbb, neighbor: int = 32, noise_level=0.0, train=False):
+def get_neighbor(protbb, neighbor: int = 32, noise_level=0.0, train=False):
     # L, 1, 3
     L = len(protbb.ca)
     if L < neighbor:
@@ -188,91 +188,91 @@ def get_neighbor_old(protbb, neighbor: int = 32, noise_level=0.0, train=False):
     return nodes, edge.transpose(1, 0), protbb.seq.squeeze(-1).long()
 
 
-def get_neighbor(protbb, neighbor: int = 32, noise_level=0.0, train=False):
-    L = len(protbb.ca)
+# def get_neighbor(protbb, neighbor: int = 32, noise_level=0.0, train=False):
+#     L = len(protbb.ca)
 
-    # 1. Pad sequence if it's shorter than the number of neighbors
-    if L < neighbor:
-        # The implementation of mk_zero_prot is assumed to work correctly
-        zero_prot = mk_zero_prot(neighbor)
-        (
-            zero_prot.ca[:L],
-            zero_prot.cb[:L],
-            zero_prot.c[:L],
-            zero_prot.o[:L],
-            zero_prot.n[:L],
-        ) = (protbb.ca, protbb.cb, protbb.c, protbb.o, protbb.n)
-        (
-            zero_prot.seq[:L],
-            zero_prot.resseq[:L],
-            zero_prot.chain_num[:L],
-            zero_prot.bb_ang[:L],
-        ) = (protbb.seq, protbb.resseq, protbb.chain_num, protbb.bb_ang)
-        protbb = zero_prot
-        L = neighbor
+#     # 1. Pad sequence if it's shorter than the number of neighbors
+#     if L < neighbor:
+#         # The implementation of mk_zero_prot is assumed to work correctly
+#         zero_prot = mk_zero_prot(neighbor)
+#         (
+#             zero_prot.ca[:L],
+#             zero_prot.cb[:L],
+#             zero_prot.c[:L],
+#             zero_prot.o[:L],
+#             zero_prot.n[:L],
+#         ) = (protbb.ca, protbb.cb, protbb.c, protbb.o, protbb.n)
+#         (
+#             zero_prot.seq[:L],
+#             zero_prot.resseq[:L],
+#             zero_prot.chain_num[:L],
+#             zero_prot.bb_ang[:L],
+#         ) = (protbb.seq, protbb.resseq, protbb.chain_num, protbb.bb_ang)
+#         protbb = zero_prot
+#         L = neighbor
 
-    assert len(protbb.ca) == L
+#     assert len(protbb.ca) == L
 
-    # 2. Efficiently compute C-alpha distances and find neighbor indices
-    # Use torch.cdist for more efficient distance calculation
-    ca_coords = protbb.ca.squeeze(1)  # Shape: [L, 3]
-    d = torch.cdist(ca_coords, ca_coords)  # Shape: [L, L]
-    _, indices = torch.topk(
-        d, neighbor, largest=False
-    )  # Shape: [L, k] (where k=neighbor)
+#     # 2. Efficiently compute C-alpha distances and find neighbor indices
+#     # Use torch.cdist for more efficient distance calculation
+#     ca_coords = protbb.ca.squeeze(1)  # Shape: [L, 3]
+#     d = torch.cdist(ca_coords, ca_coords)  # Shape: [L, L]
+#     _, indices = torch.topk(
+#         d, neighbor, largest=False
+#     )  # Shape: [L, k] (where k=neighbor)
 
-    # 3. Compute edge features on-demand for neighbors only
-    # Squeeze feature tensors from [L, 1] to [L] for easier indexing
-    resseq_flat = protbb.resseq.squeeze(-1)
-    chain_num_flat = protbb.chain_num.squeeze(-1)
+#     # 3. Compute edge features on-demand for neighbors only
+#     # Squeeze feature tensors from [L, 1] to [L] for easier indexing
+#     resseq_flat = protbb.resseq.squeeze(-1)
+#     chain_num_flat = protbb.chain_num.squeeze(-1)
 
-    # Use advanced indexing to directly get features of neighbors
-    neighbor_resseq = resseq_flat[indices]  # Shape: [L, k]
-    neighbor_chains = chain_num_flat[indices]  # Shape: [L, k]
+#     # Use advanced indexing to directly get features of neighbors
+#     neighbor_resseq = resseq_flat[indices]  # Shape: [L, k]
+#     neighbor_chains = chain_num_flat[indices]  # Shape: [L, k]
 
-    # Calculate relative values by broadcasting [L, k] and [L, 1] tensors
-    pos_num = torch.clamp(neighbor_resseq - resseq_flat.unsqueeze(1), min=-32, max=32)
-    chain_id = (neighbor_chains - chain_num_flat.unsqueeze(1)).int()
+#     # Calculate relative values by broadcasting [L, k] and [L, 1] tensors
+#     pos_num = torch.clamp(neighbor_resseq - resseq_flat.unsqueeze(1), min=-32, max=32)
+#     chain_id = (neighbor_chains - chain_num_flat.unsqueeze(1)).int()
 
-    # 4. Compute node features on-demand for neighbors only
-    seq_flat = protbb.seq.squeeze(-1)
+#     # 4. Compute node features on-demand for neighbors only
+#     seq_flat = protbb.seq.squeeze(-1)
 
-    # Directly index to get neighbor sequence tokens and angles
-    seq_toks = seq_flat[indices]  # Shape: [L, k]
-    bb_ang = protbb.bb_ang[indices]  # Shape: [L, k, 6]
+#     # Directly index to get neighbor sequence tokens and angles
+#     seq_toks = seq_flat[indices]  # Shape: [L, k]
+#     bb_ang = protbb.bb_ang[indices]  # Shape: [L, k, 6]
 
-    # Masking logic (same as original)
-    if train:
-        mask_prob = torch.rand(L, device=protbb.ca.device)
-        random_toks = torch.randint(0, 20, (L,), device=protbb.ca.device)
-        # Use torch.where for a cleaner conditional assignment
-        seq_toks[:, 0] = torch.where(mask_prob < 0.85, 21, random_toks)
-    else:
-        seq_toks[:, 0] = 21
+#     # Masking logic (same as original)
+#     if train:
+#         mask_prob = torch.rand(L, device=protbb.ca.device)
+#         random_toks = torch.randint(0, 20, (L,), device=protbb.ca.device)
+#         # Use torch.where for a cleaner conditional assignment
+#         seq_toks[:, 0] = torch.where(mask_prob < 0.85, 21, random_toks)
+#     else:
+#         seq_toks[:, 0] = 21
 
-    # 5. Efficiently compute backbone atom distances (most significant optimization)
-    bb_coords = torch.cat(
-        (protbb.ca, protbb.cb, protbb.c, protbb.n, protbb.o), dim=-2
-    )  # Shape: [L, 5, 3]
-    if noise_level > 0.0:
-        bb_coords += torch.rand_like(bb_coords) * noise_level
+#     # 5. Efficiently compute backbone atom distances (most significant optimization)
+#     bb_coords = torch.cat(
+#         (protbb.ca, protbb.cb, protbb.c, protbb.n, protbb.o), dim=-2
+#     )  # Shape: [L, 5, 3]
+#     if noise_level > 0.0:
+#         bb_coords += torch.rand_like(bb_coords) * noise_level
 
-    # Get neighbor backbone coordinates directly using indexing
-    neighbor_coords = bb_coords[indices]  # Shape: [L, k, 5, 3]
-    # Expand center residue coordinates for broadcasting
-    center_coords = bb_coords.unsqueeze(1)  # Shape: [L, 1, 5, 3]
+#     # Get neighbor backbone coordinates directly using indexing
+#     neighbor_coords = bb_coords[indices]  # Shape: [L, k, 5, 3]
+#     # Expand center residue coordinates for broadcasting
+#     center_coords = bb_coords.unsqueeze(1)  # Shape: [L, 1, 5, 3]
 
-    # Compute distances only on the [L, k] subset
-    # Broadcasting [L, 1, 5, 1, 3] and [L, k, 1, 5, 3] results in [L, k, 5, 5, 3]
-    d_x = center_coords.unsqueeze(3) - neighbor_coords.unsqueeze(2)
-    dis = torch.sqrt(torch.square(d_x).sum(dim=-1)).reshape(L, neighbor, 25)
+#     # Compute distances only on the [L, k] subset
+#     # Broadcasting [L, 1, 5, 1, 3] and [L, k, 1, 5, 3] results in [L, k, 5, 5, 3]
+#     d_x = center_coords.unsqueeze(3) - neighbor_coords.unsqueeze(2)
+#     dis = torch.sqrt(torch.square(d_x).sum(dim=-1)).reshape(L, neighbor, 25)
 
-    # 6. Combine final outputs (logic is same as original)
-    nodes = torch.cat((F.one_hot(seq_toks.long(), 22), bb_ang), dim=-1)
-    edge = torch.cat((dis, pos_num.unsqueeze(-1), chain_id.unsqueeze(-1)), dim=-1)
+#     # 6. Combine final outputs (logic is same as original)
+#     nodes = torch.cat((F.one_hot(seq_toks.long(), 22), bb_ang), dim=-1)
+#     edge = torch.cat((dis, pos_num.unsqueeze(-1), chain_id.unsqueeze(-1)), dim=-1)
 
-    # Return transposed results
-    return nodes.transpose(1, 0), edge.transpose(1, 0), protbb.seq.squeeze(-1).long()
+#     # Return transposed results
+#     return nodes.transpose(1, 0), edge.transpose(1, 0), protbb.seq.squeeze(-1).long()
 
 
 def parallel_converter(pdb):
