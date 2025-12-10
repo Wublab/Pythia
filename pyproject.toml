@@ -10,7 +10,7 @@ authors = [
     { name="Jinyuan Sun", email="jysun@im.ac.cn" }
 ]
 readme = "README.md"
-license = "MIT"
+license = { file = "LICENSE" }
 
 
 dependencies = [
