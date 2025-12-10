@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pythia-ddg"
-version = "0.1.0"
+version = "0.1.1"
 description = "Masked token modeling for protein ddG prediction"
 authors = [
-    { name="Your Name", email="you@example.com" }
+    { name="Jinyuan Sun", email="jysun@im.ac.cn" }
 ]
 readme = "README.md"
 license = "MIT"
